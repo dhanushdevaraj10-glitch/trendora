@@ -1,0 +1,54 @@
+{% extends "shop/layouts/main.html" %}
+{% block title %}Cart | TRENDORA{% endblock title %}
+
+{% block Content %}
+  <section>
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h4 class="mb-3">Cart Items</h4>
+          <hr style="border-color: #b8bfc2;">
+        </div>
+
+        <table class="table" style="border-color: transparent;">
+            <tr style="background-color: rgb(11, 0, 0); color: white;">
+                <th>Image</th>
+                <th>Product Name</th>
+                <th>Unit</th>
+                <th>Quantity</th>
+                <th>Amount</th>
+                <th>Remove</th>
+            </tr>
+          {% for item in cart %}
+          <tr>
+            <td>{% if item.Products.Product_image %}<img src="{{ item.Products.Product_image.url }}" height="75" alt="{{ item.Products.name }}">{% else %}-{% endif %}</td>
+            <td>{{ item.Products.name }}</td>
+            <td>{{ item.Products.Selling_price | floatformat:2 }}</td>
+            <td>{{ item.Product_qty }}</td>
+            <td class="amt">{{ item.total_cost|floatformat:2 }}</td>
+            <td ><a href="{% url 'remove_cart' item.id %}" onclick="return confirm('Are you sure? to remove')" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Remove</button></a></td>
+          </tr>
+          {% endfor %}
+          <tr>
+            <td></td>
+            <td></td>
+            <td colspan="2"><b>Total Amount</b></td>
+            <td id="net">0</td>
+          </tr>
+          </table>
+
+      </div>
+    </div>
+  </section>
+
+<script>
+  const nodes=document.querySelectorAll('.amt');
+  const arr=Array.from(nodes)
+  const res=arr.reduce((acc,curr) => {
+return acc += Number(curr.textContent)
+  },0);
+  document.getElementById("net").innerHTML="Rs :" +res;
+
+
+</script>  
+{% endblock Content %}

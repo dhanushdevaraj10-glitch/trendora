@@ -1,0 +1,35 @@
+{% extends "shop/layouts/main.html" %}
+{% block title %}Favourite | TRENDORA{% endblock title %}
+
+{% block Content %}
+  <section>
+    <div class="container">
+      <div class="row">
+        <div class="col-12">
+          <h4 class="mb-3">Favourite Items</h4>
+          <hr style="border-color: #b8bfc2;">
+        </div>
+
+        <table class="table" style="border-color: transparent;">
+            <tr style="background-color: rgb(11, 0, 0); color: white;">
+                <th>Image</th>
+                <th>Product Name</th>
+                <th>Unit</th>
+                <th>Remove</th>
+            </tr>
+          {% for item in fav %}
+          <tr>
+            <td>{% if item.Product.Product_image %}<img src="{{ item.Product.Product_image.url }}" height="75" alt="{{ item.Product.name }}">{% else %}-{% endif %}</td>
+            <td>{{ item.Product.name }}</td>
+            <td>{{ item.Product.Selling_price | floatformat:2 }}</td>
+            <td><a href="{% url 'remove_fav' item.id %}" onclick="return confirm('Are you sure you want to remove this favourite item?')" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Remove</a></td>
+          </tr>
+          {% endfor %}
+        
+          </table>
+
+      </div>
+    </div>
+  </section>
+
+{% endblock Content %}

@@ -1,0 +1,66 @@
+ {%extends "shop/layouts/main.html"%}
+{% block title %}
+    Register | Online Shopping
+ {% endblock title %}
+
+
+ {% block Content %}
+    <div class="cointainer" style="margin-top: 70px; min-height:600px">
+      <div class="row">
+        <div class="col-12">
+          <h4 style="margin-left: 112px;" class="mb-3">Register</h4>
+          <hr style="border-color: #b8bfc2; width: 85%; margin-left: 110px; margin-bottom: 1px;">
+          {% include "shop/inc/message.html" %}
+        </div>
+      </div>
+      <section class="py-4 my-5" >
+        <div class="container">
+          <div class="row">
+            <div class="col-6">
+              <form method="POST" action="">
+                {% csrf_token %}
+                <div class="mb-4">
+                  <label for="username" class="form-label">Username</label>
+                   {{form.username}}
+                   {% if form.username.errors %}
+                   <label class="text-danger d-block">
+                       {{ form.username.errors }}
+                   </label>
+                   {% endif %}
+                </div>
+                <div class="mb-4">
+                  <label for="email" class="form-label">Email</label>
+                   {{form.email}}
+                   {% if form.email.errors %}
+                   <label class="text-danger d-block">
+                       {{ form.email.errors }}
+                   </label>
+                   {% endif %}
+                </div>
+                <div class="mb-4">
+                  <label for="password1" class="form-label">Password</label>
+                   {{form.password1}}
+                   {% if form.password1.errors %}
+                   <label class="text-danger d-block">
+                       {{ form.password1.errors }}
+                   </label>
+                   {% endif %}
+                </div>
+                <div class="mb-4">
+                  <label for="password2" class="form-label">Confirm Password</label>
+                   {{form.password2}}
+                   {% if form.password2.errors %}
+                   <label class="text-danger d-block">
+                       {{ form.password2.errors }}
+                   </label>
+                   {% endif %}
+                </div>
+                <button type="submit" class="btn btn-primary">Register</button>
+              </form>
+              <div class="my-2">Already User ? <a href="{% url 'login' %}">Login Now</a></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+{% endblock Content %}    

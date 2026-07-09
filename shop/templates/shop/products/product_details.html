@@ -1,0 +1,162 @@
+ {%extends "shop/layouts/main.html"%}
+ {% block title %}
+    TRENDORA | Online Shopping
+ {% endblock title %}
+
+ 
+ {% block Content %}
+<section class="bg-light" py-4 my-5 style="min-height: 600px;">
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h4 style="font-weight: bold; margin-top: 20px;"> Products Details</h4>
+                <hr style="border-color: #b8bfc2; ;">
+                <nav aria-label="breadcrumb">
+                 <ol class="breadcrumb">
+                   <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
+                   <li class="breadcrumb-item"><a href="{% url 'collections' products.category.name %}">Collection</a></li>
+                   <li class="breadcrumb-item active" aria-current="page">{{ products.name }}</li>
+                 </ol>
+                </nav>
+                {% include "shop/inc/message.html" %}
+                <h2 style="font-weight: bold; margin-top: 20px;">{{ products.name }}</h2>
+            </div>    
+            <div class="col-4 my-3 pic-box">
+                {% if products.trending %}
+                <div class="hot" style="position: absolute; top: 219px; left: 111px; background-color: orangered; color: white; font-weight: bold; display: inline-block; border-radius: 3px; padding: 5px 10px;">
+                    Hot</div>
+                {% endif %}    
+                <img style="height: 350px;width: 85%; object-fit: fill;" src="{{ products.Product_image.url }}" class="card-img-top" alt="Product Image">
+            </div>
+            <div class="col-8 my-3">
+                <h5 style="color: blue;">TRENDY PRODUCT</h5>
+                <p style="font-size: 14px; margin-top: 40px;margin-bottom: 40px; color: black; width: 70%;" class="text-secoundary ">{{ products.description }}</p>
+                <h6  style="color: red;" class="my-2">Current Price : Rs.<s>{{ products.original_price | stringformat:"0.1f" }}</s></h6>
+                <h6 style="color: green; " class="my-2">Selling Price : Rs.{{ products.Selling_price | stringformat:"0.1f" }}</h6>
+                <div class="my-3">
+                {% if products.Quantity > 0 %}
+                <input type="hidden" value="{{ products.id }}" id="pid">
+                {% csrf_token %}
+                <p>
+                    <div class="input-group" style="width: 150px;">
+                        <button style="background-color:green; color: white;" class="input-group-text bg-sucess text-light" id="btnMinus"><i class="fa fa-minus"></i></button>
+                        <input type="text" name="qty" id="txtQty" value="1" class="form-control text-center">
+                        <button style="background-color:green; color: white;" class="input-group-text bg-sucess text-light" id="btnPlus"><i class="fa fa-plus"></i></button>
+                    </div>
+                </p>
+                <button  class="btn btn-primary" id="btnCart"><i class="fa fa-cart-plus"></i> Add to Cart</button>
+                {% else %}
+                <button  class="btn btn-dark"><i class="fa fa-minus"></i> Out of Stock</button>
+                {% endif %}
+                <button class="btn btn-danger" id="btnFav"><i class="fa fa-heart"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const btnPlus = document.getElementById("btnPlus");
+    const btnMinus = document.getElementById("btnMinus");
+    const txtQty = document.getElementById("txtQty");
+    const pid = document.getElementById("pid");
+    const btnCart = document.getElementById("btnCart");
+    const btnFav=document.getElementById("btnFav")
+    const tkn = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    // Increase Quantity
+    btnPlus.addEventListener("click", function () {
+
+        let qty = parseInt(txtQty.value, 10);
+        qty = isNaN(qty) ? 0 : qty;
+
+        if (qty < 10) {
+            qty++;
+            txtQty.value = qty;
+        }
+
+    });
+
+    // Decrease Quantity
+    btnMinus.addEventListener("click", function () {
+
+        let qty = parseInt(txtQty.value, 10);
+        qty = isNaN(qty) ? 0 : qty;
+
+        if (qty > 1) {
+            qty--;
+            txtQty.value = qty;
+        }
+
+    });
+
+    // Add to Cart
+    btnCart.addEventListener("click", function () {
+
+        let qty = parseInt(txtQty.value, 10);
+        qty = isNaN(qty) ? 0 : qty;
+
+        if (qty > 0) {
+
+            let postObj = {
+                product_qty: qty,
+                pid: pid.value
+            };
+
+            fetch("/addtocart", {
+                method: "POST",
+                credentials: "same-origin",
+                headers: {
+                    "Accept": "application/json",
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRFToken": tkn
+                },
+                body: JSON.stringify(postObj)
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.status);
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Something went wrong!");
+            });
+
+        } else {
+            alert("Please Enter The Quantity");
+        }
+
+    });
+
+    btnFav.addEventListener("click", function () {
+        let postObj = {
+            pid: pid.value
+        };
+
+        fetch("/fav", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: {
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRFToken": tkn
+            },
+            body: JSON.stringify(postObj)
+        })
+        .then(response => response.json())
+        .then(data => {
+            alert(data.status);
+        })
+        .catch(error => {
+            console.error(error);
+            alert("Something went wrong!");
+        });
+    });
+
+});
+
+</script>
+{% endblock Content %}    

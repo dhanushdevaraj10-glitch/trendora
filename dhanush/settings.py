@@ -31,16 +31,22 @@ SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False').lower() == 'true'
 
-ALLOWED_HOSTS = [
-    host.strip()
-    for host in os.environ.get('ALLOWED_HOSTS', '127.0.0.1,localhost,*.onrender.com').split(',')
-    if host.strip()
-]
-CSRF_TRUSTED_ORIGINS = [
-    origin.strip()
-    for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', 'https://*.onrender.com').split(',')
-    if origin.strip()
-]
+render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
+allowed_hosts = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '').split(',') if host.strip()]
+if not allowed_hosts:
+    allowed_hosts = ['127.0.0.1', 'localhost', '0.0.0.0', 'trendora-shoppp.onrender.com']
+    if render_host:
+        allowed_hosts.append(render_host)
+        if render_host.endswith('.onrender.com'):
+            allowed_hosts.append('*.onrender.com')
+ALLOWED_HOSTS = allowed_hosts
+
+csrf_origins = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
+if not csrf_origins:
+    csrf_origins = ['http://localhost:8000', 'http://127.0.0.1:8000']
+    if render_host:
+        csrf_origins.append(f'https://{render_host}')
+CSRF_TRUSTED_ORIGINS = csrf_origins
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

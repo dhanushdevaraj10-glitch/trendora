@@ -65,8 +65,12 @@ INSTALLED_APPS = [
 ]
 
 # In production, Cloudinary stores uploaded category and product images outside
-# the Render filesystem.  Locally the app continues to use MEDIA_ROOT.
-if os.environ.get('CLOUDINARY_URL'):
+# the Render filesystem. Locally the app continues to use MEDIA_ROOT. A malformed
+# environment value must not prevent the application from starting.
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '')
+CLOUDINARY_ENABLED = CLOUDINARY_URL.startswith('cloudinary://')
+
+if CLOUDINARY_ENABLED:
     INSTALLED_APPS += ['cloudinary', 'cloudinary_storage']
 
 MIDDLEWARE = [
@@ -167,7 +171,7 @@ STORAGES = {
     },
 }
 
-if os.environ.get('CLOUDINARY_URL'):
+if CLOUDINARY_ENABLED:
     STORAGES['default'] = {
         'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
     }

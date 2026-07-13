@@ -64,6 +64,11 @@ INSTALLED_APPS = [
     'shop'
 ]
 
+# In production, Cloudinary stores uploaded category and product images outside
+# the Render filesystem.  Locally the app continues to use MEDIA_ROOT.
+if os.environ.get('CLOUDINARY_URL'):
+    INSTALLED_APPS += ['cloudinary', 'cloudinary_storage']
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
@@ -161,3 +166,8 @@ STORAGES = {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },
 }
+
+if os.environ.get('CLOUDINARY_URL'):
+    STORAGES['default'] = {
+        'BACKEND': 'cloudinary_storage.storage.MediaCloudinaryStorage',
+    }

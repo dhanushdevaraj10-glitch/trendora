@@ -25,6 +25,6 @@ urlpatterns = [
     path('', include('shop.urls')),
 ]
 
-if settings.DEBUG:
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
- 
+# Product images are user uploads, not static build assets.  Keep this route
+# available for the Gunicorn deployment as well as local development.
+urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

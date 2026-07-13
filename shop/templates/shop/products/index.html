@@ -16,7 +16,11 @@
              {% for items in products %}
             <div class="col-md-4 col-lg-3">
               <div class="card my-3">
-                <img style="height: 250px; object-fit: fill;" src="{{ items.Product_image.url }}" class="card-img-top" alt="Categories">
+                {% if items.Product_image %}
+                <img style="height: 250px; object-fit: fill;" src="{{ items.Product_image.url }}" class="card-img-top" alt="{{ items.name }}">
+                {% else %}
+                <div class="d-flex align-items-center justify-content-center bg-light" style="height: 250px;">Image unavailable</div>
+                {% endif %}
                 <hr style="border-color: #b8bfc2; margin: 0px;">
                 <a style="text-decoration: none;" href="{% url 'product_details' category_name items.name %}">
                 <div class="card-body">

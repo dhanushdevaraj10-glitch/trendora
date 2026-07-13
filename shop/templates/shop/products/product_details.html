@@ -26,7 +26,11 @@
                 <div class="hot" style="position: absolute; top: 219px; left: 111px; background-color: orangered; color: white; font-weight: bold; display: inline-block; border-radius: 3px; padding: 5px 10px;">
                     Hot</div>
                 {% endif %}    
-                <img style="height: 350px;width: 85%; object-fit: fill;" src="{{ products.Product_image.url }}" class="card-img-top" alt="Product Image">
+                {% if products.Product_image %}
+                <img style="height: 350px;width: 85%; object-fit: fill;" src="{{ products.Product_image.url }}" class="card-img-top" alt="{{ products.name }}">
+                {% else %}
+                <div class="d-flex align-items-center justify-content-center bg-light" style="height: 350px; width: 85%;">Image unavailable</div>
+                {% endif %}
             </div>
             <div class="col-8 my-3">
                 <h5 style="color: blue;">TRENDY PRODUCT</h5>

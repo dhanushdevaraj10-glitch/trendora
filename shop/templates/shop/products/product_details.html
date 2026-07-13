@@ -14,7 +14,7 @@
                 <nav aria-label="breadcrumb">
                  <ol class="breadcrumb">
                    <li class="breadcrumb-item"><a href="{% url 'home' %}">Home</a></li>
-                   <li class="breadcrumb-item"><a href="{% url 'collections' products.category.name %}">Collection</a></li>
+                   <li class="breadcrumb-item"><a href="{% url 'collectionview' products.category.name %}">Collection</a></li>
                    <li class="breadcrumb-item active" aria-current="page">{{ products.name }}</li>
                  </ol>
                 </nav>
@@ -104,7 +104,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 pid: pid.value
             };
 
-            fetch("/addtocart", {
+            fetch("{% url 'addtocart' %}", {
                 method: "POST",
                 credentials: "same-origin",
                 headers: {
@@ -135,7 +135,7 @@ document.addEventListener("DOMContentLoaded", function () {
             pid: pid.value
         };
 
-        fetch("/fav", {
+        fetch("{% url 'fav' %}", {
             method: "POST",
             credentials: "same-origin",
             headers: {

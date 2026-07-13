@@ -1,4 +1,3 @@
-from http.client import HTTPResponse
 import json
 
 from django.http import JsonResponse
@@ -10,7 +9,10 @@ from django.contrib import messages
 from django.contrib.auth import authenticate,login,logout
 
 def home(request):
-    products = Product.objects.filter(trending=1)
+    products = Product.objects.filter(
+        status=False,
+        category__status=False,
+    ).order_by('-created_at')
     return render(request, 'shop/index.html', {'products': products})
 
 def favViewPage(request):
@@ -43,9 +45,8 @@ def add_to_cart(request):
             if Cart.objects.filter(User=request.user, Products_id=product_id).exists():
                 return JsonResponse({'status': 'Already in Cart'}, status=200)
 
-            # assume product_status has field 'quantity'
             try:
-                available_qty = int(getattr(product_status, 'quantity', getattr(product_status, 'Quantity', 0)))
+                available_qty = product_status.Quantity
                 req_qty = int(product_qty)
             except Exception:
                 return JsonResponse({'status': 'Invalid quantity'}, status=400)
@@ -76,7 +77,7 @@ def login_page(request):
             return redirect('/')
         else:
             messages.error(request, "Invalid Username or Password")
-            return redirect('/login')
+            return redirect('login')
     return render(request, 'shop/login.html')
 
 def logout_page(request):
@@ -100,24 +101,26 @@ def collections(request):
     return render(request, 'shop/collections.html', {'categories': categories})
 
 def collectionview(request, name):
-    if (Category.objects.filter(name=name,status=0)):
-     products = Product.objects.filter(category__name=name)
-     return render(request, 'shop/products/index.html', {'products': products, "category_name": name})
-    else:
+    category = Category.objects.filter(name=name, status=False).first()
+    if not category:
         messages.warning(request, "No such category found")
         return redirect('collections')
+
+    products = Product.objects.filter(category=category, status=False)
+    return render(request, 'shop/products/index.html', {'products': products, "category_name": category.name})
     
 def product_details(request, cname, pname):
-    if (Category.objects.filter(name=cname,status=0)):
-        if (Product.objects.filter(name=pname,status=0)):
-            products = Product.objects.filter(name=pname,status=0).first()
-            return render(request, 'shop/products/product_details.html', {'products': products})
-        else:
-            messages.warning(request, "No such product found")
-            return redirect('collections')
-    else:
+    product = Product.objects.filter(
+        category__name=cname,
+        category__status=False,
+        name=pname,
+        status=False,
+    ).first()
+    if not product:
         messages.warning(request, "No such product found")
         return redirect('collections')
+
+    return render(request, 'shop/products/product_details.html', {'products': product})
     
 def cart_page(request):
     if request.user.is_authenticated:
@@ -128,9 +131,12 @@ def cart_page(request):
     
 
 def remove_cart(request,cid):
-     cartitem=Cart.objects.get(id=cid)
+     cartitem=Cart.objects.filter(id=cid, User=request.user).first()
+     if not cartitem:
+         messages.warning(request, "Cart item not found")
+         return redirect('cart')
      cartitem.delete()
-     return redirect("/cart")
+     return redirect('cart')
 
 def fav_page(request):
     if request.headers.get('x-requested-with') == 'XMLHttpRequest':
@@ -161,6 +167,9 @@ def fav_page(request):
 
 
 def remove_fav(request, fid):
-    fav_item = Favourite.objects.get(id=fid)
+    fav_item = Favourite.objects.filter(id=fid, User=request.user).first()
+    if not fav_item:
+        messages.warning(request, "Favourite item not found")
+        return redirect('favViewPage')
     fav_item.delete()
-    return redirect('/favViewPage/')
+    return redirect('favViewPage')

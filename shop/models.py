@@ -1,5 +1,6 @@
 import datetime
 import os
+from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -28,8 +29,8 @@ class Product(models.Model):
     vendor = models.CharField(max_length=150, null=False, blank=False)
     Product_image = models.ImageField(upload_to=getFileName, null=True, blank=True)
     Quantity = models.IntegerField(null=False, blank=False)
-    original_price = models.FloatField(null=False, blank=False)
-    Selling_price = models.FloatField(null=False, blank=False)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2)
+    Selling_price = models.DecimalField(max_digits=10, decimal_places=2)
     description = models.TextField(max_length=500, null=False, blank=False)
     status = models.BooleanField(default=False, help_text="0=Show, 1=Hidden")
     trending = models.BooleanField(default=False, help_text="0=default, 1=Trending")
@@ -47,10 +48,7 @@ class Cart(models.Model):
 
     @property
     def total_cost(self):
-        try:
-            return self.Product_qty * float(self.Products.Selling_price)
-        except Exception:
-            return 0
+        return self.Product_qty * self.Products.Selling_price
 
     def __str__(self):
         return f"{self.User} - {self.Products}"

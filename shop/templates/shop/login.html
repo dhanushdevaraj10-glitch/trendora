@@ -5,18 +5,18 @@
 
 
  {% block Content %}
-    <div class="cointainer" style="margin-top: 70px; min-height:600px">
+    <div class="container" style="margin-top: clamp(28px, 6vw, 70px); min-height:600px">
       <div class="row">
         <div class="col-12">
-          <h4 style="margin-left: 112px;" class="mb-3">User Login</h4>
-          <hr style="border-color: #b8bfc2; width: 85%; margin-left: 110px; margin-bottom: 1px;">
+          <h4 class="page-heading mb-3">User Login</h4>
+          <hr class="page-divider" style="border-color: #b8bfc2; margin-bottom: 1px;">
           {% include "shop/inc/message.html" %}
         </div>
       </div>
       <section class="py-4 my-5" >
         <div class="container">
           <div class="row">
-            <div class="col-6">
+            <div class="col-12 col-md-6">
                <form method="POST" action="">
                 {% csrf_token %}
                 <div class="mb-4">
@@ -24,8 +24,8 @@
                    <input type="text" name="username" class="form-control" id="username" placeholder="Enter your username">
                 </div>
                 <div class="mb-4">
-                  <label for="password1" class="form-label">Password</label>
-                   <input type="password" name="password1" class="form-control" id="password1" placeholder="Enter your password">
+                  <label for="password" class="form-label">Password</label>
+                   <input type="password" name="password" class="form-control" id="password" placeholder="Enter your password">
                 </div>
                 <button type="submit" class="btn btn-primary">Login</button>
                </form>

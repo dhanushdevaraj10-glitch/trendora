@@ -5,11 +5,11 @@
 
  
  {% block Content %}
-<section class="bg-light" py-4 my-5 style="min-height: 600px;">
+<section class="bg-light py-4 my-5" style="min-height: 600px;">
     <div class="container">
         <div class="row">
             <div class="col-12">
-                <h4 style="font-weight: bold; margin-top: 20px;"> Products Details</h4>
+                <h4 style="font-weight: bold; margin-top: 20px;">Products Details</h4>
                 <hr style="border-color: #b8bfc2; ;">
                 <nav aria-label="breadcrumb">
                  <ol class="breadcrumb">
@@ -21,20 +21,21 @@
                 {% include "shop/inc/message.html" %}
                 <h2 style="font-weight: bold; margin-top: 20px;">{{ products.name }}</h2>
             </div>    
-            <div class="col-4 my-3 pic-box">
-                {% if products.trending %}
-                <div class="hot" style="position: absolute; top: 219px; left: 111px; background-color: orangered; color: white; font-weight: bold; display: inline-block; border-radius: 3px; padding: 5px 10px;">
-                    Hot</div>
-                {% endif %}    
-                {% if products.Product_image %}
-                <img style="height: 350px;width: 85%; object-fit: fill;" src="{{ products.Product_image.url }}" class="card-img-top" alt="{{ products.name }}">
-                {% else %}
-                <div class="d-flex align-items-center justify-content-center bg-light" style="height: 350px; width: 85%;">Image unavailable</div>
-                {% endif %}
+            <div class="col-12 col-md-5 my-3 pic-box position-relative">
+                <div class="product-image-wrap product-detail-image-wrap">
+                    {% if products.trending %}
+                    <span class="hot product-card-hot">Hot</span>
+                    {% endif %}
+                    {% if products.Product_image %}
+                    <img src="{{ products.Product_image.url }}" class="product-detail-image" alt="{{ products.name }}">
+                    {% else %}
+                    <div class="d-flex align-items-center justify-content-center bg-light" style="height: 350px;">Image unavailable</div>
+                    {% endif %}
+                </div>
             </div>
-            <div class="col-8 my-3">
+            <div class="col-12 col-md-7 my-3">
                 <h5 style="color: blue;">TRENDY PRODUCT</h5>
-                <p style="font-size: 14px; margin-top: 40px;margin-bottom: 40px; color: black; width: 70%;" class="text-secoundary ">{{ products.description }}</p>
+                <p class="product-detail-description text-secondary my-4" style="font-size: 14px; color: black;">{{ products.description }}</p>
                 <h6  style="color: red;" class="my-2">Current Price : Rs.<s>{{ products.original_price | stringformat:"0.1f" }}</s></h6>
                 <h6 style="color: green; " class="my-2">Selling Price : Rs.{{ products.Selling_price | stringformat:"0.1f" }}</h6>
                 <div class="my-3">
@@ -42,7 +43,7 @@
                 <input type="hidden" value="{{ products.id }}" id="pid">
                 {% csrf_token %}
                 <p>
-                    <div class="input-group" style="width: 150px;">
+                    <div class="input-group quantity-control">
                         <button style="background-color:green; color: white;" class="input-group-text bg-sucess text-light" id="btnMinus"><i class="fa fa-minus"></i></button>
                         <input type="text" name="qty" id="txtQty" value="1" class="form-control text-center">
                         <button style="background-color:green; color: white;" class="input-group-text bg-sucess text-light" id="btnPlus"><i class="fa fa-plus"></i></button>

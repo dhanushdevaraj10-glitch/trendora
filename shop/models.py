@@ -1,15 +1,14 @@
-import datetime
 import os
-from decimal import Decimal
+import uuid
 
 from django.contrib.auth.models import User
 from django.db import models
 
 
-def getFileName(request, filename):
-    now_time = datetime.datetime.now().strftime("%Y%m%d%H:%M:%S")
-    new_filename = "%s_%s" % (now_time, filename)
-    return os.path.join('uploads/', new_filename)
+def getFileName(_instance, filename):
+    safe_filename = os.path.basename(filename)
+    new_filename = f"{uuid.uuid4().hex}_{safe_filename}"
+    return os.path.join('uploads', new_filename)
 
 
 class Category(models.Model):

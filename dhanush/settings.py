@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 import os
 from pathlib import Path
 
+from django.core.exceptions import ImproperlyConfigured
+
 try:
     import dj_database_url
 except ImportError:
@@ -25,14 +27,29 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'change-me')
+IS_VERCEL = bool(os.environ.get('VERCEL'))
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
+DEBUG = os.environ.get('DEBUG', 'False' if IS_VERCEL else 'True').lower() == 'true'
+SECRET_KEY = os.environ.get('SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'change-me'
+    else:
+        raise ImproperlyConfigured('Set SECRET_KEY in the deployment environment.')
 
 render_host = os.environ.get('RENDER_EXTERNAL_HOSTNAME', '').strip()
-allowed_hosts = [host.strip() for host in os.environ.get('ALLOWED_HOSTS', '').split(',') if host.strip()]
+vercel_hosts = [
+    os.environ.get(name, '').strip()
+    for name in ('VERCEL_URL', 'VERCEL_PROJECT_PRODUCTION_URL', 'VERCEL_BRANCH_URL')
+]
+allowed_hosts = [
+    host.strip()
+    for host in os.environ.get('ALLOWED_HOSTS', '').split(',')
+    if host.strip()
+]
+allowed_hosts.extend(host for host in vercel_hosts if host)
+if render_host:
+    allowed_hosts.append(render_host)
 if not allowed_hosts:
     allowed_hosts = ['127.0.0.1', 'localhost', '0.0.0.0', 'trendora-shoppp.onrender.com']
     if render_host:
@@ -42,14 +59,18 @@ if not allowed_hosts:
 ALLOWED_HOSTS = allowed_hosts
 
 csrf_origins = [origin.strip() for origin in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
-if not csrf_origins:
-    csrf_origins = ['http://localhost:8000', 'http://127.0.0.1:8000']
+csrf_origins.extend(f'https://{host}' for host in vercel_hosts if host)
+if not os.environ.get('CSRF_TRUSTED_ORIGINS'):
+    csrf_origins.extend(['http://localhost:8000', 'http://127.0.0.1:8000'])
     if render_host:
         csrf_origins.append(f'https://{render_host}')
 CSRF_TRUSTED_ORIGINS = csrf_origins
 
 if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # Application definition
@@ -64,11 +85,13 @@ INSTALLED_APPS = [
     'shop'
 ]
 
-# In production, Cloudinary stores uploaded category and product images outside
-# the Render filesystem. Locally the app continues to use MEDIA_ROOT. A malformed
-# environment value must not prevent the application from starting.
+# In production, use persistent object storage rather than the ephemeral platform
+# filesystem. Locally, uploads continue to use MEDIA_ROOT.
 CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL', '')
 CLOUDINARY_ENABLED = CLOUDINARY_URL.startswith('cloudinary://')
+
+if not DEBUG and not CLOUDINARY_ENABLED:
+    raise ImproperlyConfigured('Set CLOUDINARY_URL to persistent media storage.')
 
 if CLOUDINARY_ENABLED:
     INSTALLED_APPS += ['cloudinary', 'cloudinary_storage']
@@ -107,13 +130,16 @@ WSGI_APPLICATION = 'dhanush.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-if dj_database_url:
+DATABASE_URL = os.environ.get('DATABASE_URL', '')
+if DATABASE_URL and dj_database_url:
     DATABASES = {
         'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL', 'sqlite:///' + str(BASE_DIR / 'db.sqlite3')),
+            default=DATABASE_URL,
             conn_max_age=600
         )
     }
+elif not DEBUG:
+    raise ImproperlyConfigured('Set DATABASE_URL to a persistent production database.')
 else:
     DATABASES = {
         'default': {
@@ -166,6 +192,9 @@ STATICFILES_DIRS = [
     BASE_DIR / 'static'
 ]
 STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
     },

@@ -100,6 +100,7 @@ def collections(request):
     categories = Category.objects.filter(status=0)
     return render(request, 'shop/collections.html', {'categories': categories})
 
+
 def collectionview(request, name):
     category = Category.objects.filter(name=name, status=False).first()
     if not category:

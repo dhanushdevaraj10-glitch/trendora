@@ -189,7 +189,8 @@ a
 
     .product-card-image,
     .category-card-image {
-        height: 140px;
+        height: auto;
+        object-fit: contain;
     }
 
     .catalog-image-placeholder {

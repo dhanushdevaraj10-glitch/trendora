@@ -21,13 +21,15 @@
                   <span class="hot product-card-hot">Hot</span>
                   {% endif %}
                 {% if items.Product_image %}
+                <a style="text-decoration: none;" href="{% url 'product_details' items.id %}">
                 <img src="{{ items.Product_image.url }}" class="card-img-top product-card-image" alt="{{ items.name }}">
+                </a>
                 {% else %}
                 <div class="d-flex align-items-center justify-content-center bg-light" style="height: 250px;">Image unavailable</div>
                 {% endif %}
                 </div>
                 <hr style="border-color: #b8bfc2; margin: 0px;">
-                <a style="text-decoration: none;" href="{% url 'product_details' category_name items.name %}">
+                <a style="text-decoration: none;" href="{% url 'product_details' items.id %}">
                 <div class="card-body">
                   <h5 class="card-title text-start" style="margin-bottom: 18px;">{{ items.name }}</h5> 
                   <p style="font-size: 14px; margin-top: 0px; color: black;" class="text-primary product-prices">

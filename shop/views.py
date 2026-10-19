@@ -66,18 +66,18 @@ def login_page(request):
     if request.user.is_authenticated:
         return redirect('/')
     else:
-       if request.method == 'POST':
-        name = request.POST.get('username')
-        pwd = request.POST.get('password')
+        if request.method == 'POST':
+            name = request.POST.get('username')
+            pwd = request.POST.get('password')
 
-        user = authenticate(request, username=name, password=pwd)
-        if user is not None:
-            login(request, user)
-            messages.success(request, "Logged in Successfully")
-            return redirect('/')
-        else:
-            messages.error(request, "Invalid Username or Password")
-            return redirect('login')
+            user = authenticate(request, username=name, **{'password': pwd})
+            if user is not None:
+                login(request, user)
+                messages.success(request, "Logged in Successfully")
+                return redirect('/')
+            else:
+                messages.error(request, "Invalid Username or Password")
+                return redirect('login')
     return render(request, 'shop/login.html')
 
 def logout_page(request):
@@ -110,11 +110,10 @@ def collectionview(request, name):
     products = Product.objects.filter(category=category, status=False)
     return render(request, 'shop/products/index.html', {'products': products, "category_name": category.name})
     
-def product_details(request, cname, pname):
+def product_details(request, pid):
     product = Product.objects.filter(
-        category__name=cname,
+        id=pid,
         category__status=False,
-        name=pname,
         status=False,
     ).first()
     if not product:
@@ -122,7 +121,7 @@ def product_details(request, cname, pname):
         return redirect('collections')
 
     return render(request, 'shop/products/product_details.html', {'products': product})
-    
+
 def cart_page(request):
     if request.user.is_authenticated:
         cart=Cart.objects.filter(User=request.user)

@@ -33,7 +33,7 @@
                 {% if items.image %}
                 <img src="{{ items.image.url }}" class="card-img-top category-card-image" alt="{{ items.name }}">
                 {% else %}
-                <div class="d-flex align-items-center justify-content-center bg-light" style="height: 250px;">Image unavailable</div>
+                <div class="catalog-image-placeholder d-flex align-items-center justify-content-center bg-light">Image unavailable</div>
                 {% endif %}
                 <hr style="border-color: #b8bfc2; margin: 0px;">
                 <a style="text-decoration: none;" href="{% url 'collectionview' items.name %}">

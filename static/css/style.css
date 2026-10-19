@@ -189,12 +189,14 @@ a
 
     .product-card-image,
     .category-card-image {
+        aspect-ratio: 1 / 1;
         height: auto;
         object-fit: contain;
     }
 
     .catalog-image-placeholder {
-        height: 140px;
+        aspect-ratio: 1 / 1;
+        height: auto;
     }
 
     .product-card .card-body {

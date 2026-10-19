@@ -67,7 +67,7 @@ def login_page(request):
         return redirect('/')
     else:
         if request.method == 'POST':
-            name = request.POST.get('username')
+            name = (request.POST.get('username') or '').strip()
             pwd = request.POST.get('password')
 
             user = authenticate(request, username=name, **{'password': pwd})

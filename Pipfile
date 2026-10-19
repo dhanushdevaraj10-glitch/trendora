@@ -12,6 +12,7 @@ psycopg2-binary = "*"
 django-jazzmin = "*"
 cloudinary = "*"
 django-cloudinary-storage = "*"
+Pillow = "*"
 
 [dev-packages]
 

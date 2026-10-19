@@ -1,9 +1,13 @@
 import os
+import tempfile
+from io import BytesIO
 
 from django.contrib.auth import get_user_model
 from django.core.files.storage import storages
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from PIL import Image
 
 from .models import Category, Product, getFileName
 
@@ -36,6 +40,39 @@ class ShopAdminTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('admin:shop_category_changelist'))
         self.assertTrue(Category.objects.filter(name='Phones').exists())
+
+    def test_category_image_can_be_uploaded_in_admin(self):
+        image_data = BytesIO()
+        Image.new('RGB', (1, 1), color='red').save(image_data, format='PNG')
+
+        with tempfile.TemporaryDirectory() as media_root, override_settings(
+            MEDIA_ROOT=media_root,
+            STORAGES={
+                'default': {
+                    'BACKEND': 'django.core.files.storage.FileSystemStorage',
+                },
+                'staticfiles': {
+                    'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+                },
+            },
+        ):
+            response = self.client.post(
+                reverse('admin:shop_category_add'),
+                {
+                    'name': 'Phones with image',
+                    'description': 'Mobile phones',
+                    'image': SimpleUploadedFile(
+                        'phones.png',
+                        image_data.getvalue(),
+                        content_type='image/png',
+                    ),
+                },
+            )
+
+            self.assertEqual(response.status_code, 302)
+            category = Category.objects.get(name='Phones with image')
+            self.assertTrue(category.image.name)
+            self.assertTrue(category.image.storage.exists(category.image.name))
 
     def test_product_can_be_added_in_admin(self):
         category = Category.objects.create(

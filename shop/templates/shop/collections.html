@@ -39,7 +39,7 @@
                 <a style="text-decoration: none;" href="{% url 'collectionview' items.name %}">
                 <div class="card-body">
                   <h5 class="card-title text-center">{{ items.name }}</h5>
-                  <p style="font-size: 14px; margin-top: 20px; color: black;" class="text-secoundary ">{{ items.description }}</p> 
+                  <p style="font-size: 14px; margin-top: 20px; color: black;" class="text-secoundary ">{{ items.description|capfirst }}</p>
                 </div>
                 </a>
               </div>

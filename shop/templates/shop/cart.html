@@ -8,9 +8,6 @@
         <div class="col-12">
           <h4 class="mb-3">Cart Items</h4>
           <hr style="border-color: #b8bfc2;">
-          {% if is_guest %}
-          <p class="text-muted">Your cart is saved on this device. <a href="{% url 'login' %}?next={% url 'cart' %}">Sign in</a> to save it to your account.</p>
-          {% endif %}
         </div>
 
         <div class="table-responsive">

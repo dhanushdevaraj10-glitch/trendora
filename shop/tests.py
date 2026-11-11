@@ -2,6 +2,7 @@ import json
 import os
 import tempfile
 from io import BytesIO
+from urllib.parse import parse_qs, urlsplit
 
 from django.contrib.auth import get_user_model
 from django.core.files.storage import storages
@@ -151,11 +152,47 @@ class LoginTests(TestCase):
 
         self.assertRedirects(response, reverse('cart'))
 
-    def test_cart_and_favorites_are_available_to_guests(self):
+    def test_cart_and_favorites_redirect_guests_to_register(self):
+        for page_name in ('cart', 'favViewPage'):
+            response = self.client.get(reverse(page_name))
+
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(urlsplit(response.url).path, reverse('register'))
+            self.assertEqual(
+                parse_qs(urlsplit(response.url).query),
+                {'next': [reverse(page_name)]},
+            )
+
+    def test_authenticated_user_can_open_cart_and_favorites(self):
+        user = get_user_model().objects.create_user(
+            username='customer',
+            password='correct-password',
+        )
+        self.client.force_login(user)
+
         for page_name in ('cart', 'favViewPage'):
             response = self.client.get(reverse(page_name))
 
             self.assertEqual(response.status_code, 200)
+
+    def test_register_preserves_requested_page_for_login(self):
+        response = self.client.post(
+            reverse('register') + '?next=' + reverse('cart'),
+            {
+                'username': 'new-customer',
+                'email': 'new-customer@example.com',
+                'password1': 'Safe-password-123!',
+                'password2': 'Safe-password-123!',
+                'next': reverse('cart'),
+            },
+        )
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(urlsplit(response.url).path, reverse('login'))
+        self.assertEqual(
+            parse_qs(urlsplit(response.url).query),
+            {'next': [reverse('cart')]},
+        )
 
 
 @override_settings(
@@ -253,48 +290,55 @@ class GuestShoppingTests(TestCase):
             HTTP_X_REQUESTED_WITH='XMLHttpRequest',
         )
 
-    def test_guest_can_add_view_and_remove_cart_items(self):
-        response = self.post_product_action(
+    def test_guest_product_actions_require_login(self):
+        cart_response = self.post_product_action(
             'addtocart',
             {'pid': self.product.id, 'product_qty': 2},
         )
-        self.assertEqual(response.json()['status'], 'Product Added to Cart')
-
-        cart_response = self.client.get(reverse('cart'))
-        self.assertEqual(cart_response.status_code, 200)
-        self.assertContains(cart_response, self.product.name)
-        self.assertContains(cart_response, 'saved on this device')
-
-        remove_response = self.client.get(
-            reverse('remove_cart', args=[self.product.id])
+        self.assertEqual(cart_response.status_code, 401)
+        self.assertEqual(
+            cart_response.json()['status'],
+            'Please log in to add this item to your cart.',
         )
-        self.assertEqual(remove_response.status_code, 302)
-        self.assertNotIn(str(self.product.id), self.client.session.get('guest_cart', {}))
 
-    def test_guest_can_add_view_and_remove_favorites(self):
-        response = self.post_product_action(
+        favorite_response = self.post_product_action(
             'fav',
             {'pid': self.product.id},
         )
-        self.assertEqual(response.json()['status'], 'Product Added to Favourite')
-
-        favorites_response = self.client.get(reverse('favViewPage'))
-        self.assertEqual(favorites_response.status_code, 200)
-        self.assertContains(favorites_response, self.product.name)
-        self.assertContains(favorites_response, 'saved on this device')
-
-        remove_response = self.client.get(
-            reverse('remove_fav', args=[self.product.id])
+        self.assertEqual(favorite_response.status_code, 401)
+        self.assertEqual(
+            favorite_response.json()['status'],
+            'Please log in to add this item to your favorites.',
         )
-        self.assertEqual(remove_response.status_code, 302)
-        self.assertNotIn(self.product.id, self.client.session.get('guest_favorites', []))
+        self.assertFalse(Cart.objects.exists())
+        self.assertFalse(Favourite.objects.exists())
+        self.assertNotIn('guest_cart', self.client.session)
+        self.assertNotIn('guest_favorites', self.client.session)
+
+    def test_authenticated_user_can_add_cart_and_favorite_items(self):
+        self.client.force_login(self.user)
+
+        cart_response = self.post_product_action(
+            'addtocart',
+            {'pid': self.product.id, 'product_qty': 2},
+        )
+        favorite_response = self.post_product_action(
+            'fav',
+            {'pid': self.product.id},
+        )
+
+        self.assertEqual(cart_response.json()['status'], 'Product Added to Cart')
+        self.assertEqual(favorite_response.json()['status'], 'Product Added to Favourite')
+        self.assertTrue(Cart.objects.filter(User=self.user, Products=self.product).exists())
+        self.assertTrue(
+            Favourite.objects.filter(User=self.user, Product=self.product).exists()
+        )
 
     def test_guest_items_merge_into_account_on_login(self):
-        self.post_product_action(
-            'addtocart',
-            {'pid': self.product.id, 'product_qty': 3},
-        )
-        self.post_product_action('fav', {'pid': self.product.id})
+        session = self.client.session
+        session['guest_cart'] = {str(self.product.id): 3}
+        session['guest_favorites'] = [self.product.id]
+        session.save()
         Cart.objects.create(
             User=self.user,
             Products=self.product,

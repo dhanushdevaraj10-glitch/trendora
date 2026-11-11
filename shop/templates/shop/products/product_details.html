@@ -70,6 +70,14 @@ document.addEventListener("DOMContentLoaded", function () {
     const btnFav=document.getElementById("btnFav")
     const tkn = document.querySelector('[name=csrfmiddlewaretoken]').value;
 
+    function showActionResult(response, data) {
+        alert(data.status);
+        if (response.status === 401) {
+            const nextUrl = window.location.pathname + window.location.search;
+            window.location.href = "{% url 'register' %}?next=" + encodeURIComponent(nextUrl);
+        }
+    }
+
     // Increase Quantity
     btnPlus.addEventListener("click", function () {
 
@@ -120,9 +128,9 @@ document.addEventListener("DOMContentLoaded", function () {
                 },
                 body: JSON.stringify(postObj)
             })
-            .then(response => response.json())
-            .then(data => {
-                alert(data.status);
+            .then(response => response.json().then(data => ({ response, data })))
+            .then(({ response, data }) => {
+                showActionResult(response, data);
             })
             .catch(error => {
                 console.error(error);
@@ -151,9 +159,9 @@ document.addEventListener("DOMContentLoaded", function () {
             },
             body: JSON.stringify(postObj)
         })
-        .then(response => response.json())
-        .then(data => {
-            alert(data.status);
+        .then(response => response.json().then(data => ({ response, data })))
+        .then(({ response, data }) => {
+            showActionResult(response, data);
         })
         .catch(error => {
             console.error(error);

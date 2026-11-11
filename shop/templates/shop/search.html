@@ -1,0 +1,70 @@
+{% extends "shop/layouts/main.html" %}
+
+{% block title %}Search Products | TRENDORA{% endblock title %}
+
+{% block Content %}
+<section class="container search-page">
+  <h1 class="page-heading">Search Products</h1>
+  <form class="search-form" method="get" action="{% url 'search' %}" role="search">
+    <label class="visually-hidden" for="product-search">Search products</label>
+    <div class="input-group">
+      <input
+        id="product-search"
+        class="form-control"
+        type="search"
+        name="q"
+        value="{{ query }}"
+        placeholder="Search products..."
+        maxlength="100"
+        autofocus
+      >
+      <button class="btn btn-primary" type="submit">
+        <i class="fa fa-search" aria-hidden="true"></i>
+        <span>Search</span>
+      </button>
+    </div>
+  </form>
+
+  {% if query %}
+    <h2 class="search-results-heading">
+      Search results for “{{ query }}”
+    </h2>
+    <div class="row catalog-grid">
+      {% for items in products %}
+        <div class="col-6 col-md-4 col-lg-3">
+          <div class="card product-card h-100">
+            <div class="product-image-wrap">
+              {% if items.trending %}
+                <span class="hot product-card-hot">Hot</span>
+              {% endif %}
+              {% if items.Product_image %}
+                <a href="{% url 'product_details' items.id %}">
+                  <img src="{{ items.Product_image.url }}" class="card-img-top product-card-image" alt="{{ items.name }}">
+                </a>
+              {% else %}
+                <div class="catalog-image-placeholder d-flex align-items-center justify-content-center bg-light">Image unavailable</div>
+              {% endif %}
+            </div>
+            <hr style="border-color: #b8bfc2; margin: 0;">
+            <a href="{% url 'product_details' items.id %}">
+              <div class="card-body">
+                <h3 class="card-title text-start">{{ items.name }}</h3>
+                <p class="product-prices">
+                  <span class="search-original-price"><s>Rs.{{ items.original_price|floatformat:1 }}</s></span>
+                  <span class="search-selling-price">Rs.{{ items.Selling_price|floatformat:1 }}</span>
+                </p>
+              </div>
+            </a>
+          </div>
+        </div>
+      {% empty %}
+        <div class="col-12">
+          <p class="search-empty-state">No products found. Try another search.</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="search-empty-state">Enter a product name, brand, or category to get started.</p>
+  {% endif %}
+</section>
+{% endblock Content %}

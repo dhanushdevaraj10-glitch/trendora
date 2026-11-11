@@ -6,18 +6,40 @@
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
       <div class="navbar-nav ms-auto">
-        <a class="nav-link" aria-current="page" href="{% url 'home' %}"> <i class="fa fa-home"></i> Home</a>
-        {% if request.user.is_authenticated %}
-        <a class="nav-link" aria-current="page" href="#"> <i class="fa fa-user"></i> {{ request.user }}</a>
-        <a class="nav-link" aria-current="page"  href="{% url 'logout' %}"> <i class="fa fa-sign-out"></i> Logout</a>
-        {% else %}
         <a class="nav-link" href="{% url 'login' %}"> <i class="fa fa-sign-in"></i> Login</a>
         <a class="nav-link" href="{% url 'register' %}"> <i class="fa fa-users"></i> Register</a>
-        {% endif %}
-        <a class="nav-link" href="{% url 'collections' %}"> <i class="fa fa-cubes"></i> Collections</a>
-        <a class="nav-link" href="{% url 'cart'%}"> <i class="fa fa-shopping-cart"></i> Cart</a>
-        <a class="nav-link" href="{% url 'favViewPage'%}"> <i class="fa fa-heart"></i> favourite</a>
       </div>  
     </div>
   </div>
 </nav>
+
+{% if request.resolver_match.url_name != 'search' %}
+<a class="mobile-search-trigger" href="{% url 'search' %}" aria-label="Search products">
+  <i class="fa fa-search" aria-hidden="true"></i>
+</a>
+{% endif %}
+
+{% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' or request.resolver_match.url_name == 'collections' or request.resolver_match.url_name == 'collectionview' or request.resolver_match.url_name == 'cart' or request.resolver_match.url_name == 'favViewPage' or request.resolver_match.url_name == 'search' %}
+<nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+  <a class="mobile-bottom-nav__link{% if request.resolver_match.url_name == 'home' %} is-active{% endif %}"
+     href="{% url 'home' %}"{% if request.resolver_match.url_name == 'home' %} aria-current="page"{% endif %}>
+    <i class="fa fa-home" aria-hidden="true"></i>
+    <span>Home</span>
+  </a>
+  <a class="mobile-bottom-nav__link{% if request.resolver_match.url_name == 'collections' or request.resolver_match.url_name == 'collectionview' %} is-active{% endif %}"
+     href="{% url 'collections' %}"{% if request.resolver_match.url_name == 'collections' or request.resolver_match.url_name == 'collectionview' %} aria-current="page"{% endif %}>
+    <i class="fa fa-cubes" aria-hidden="true"></i>
+    <span>Collections</span>
+  </a>
+  <a class="mobile-bottom-nav__link{% if request.resolver_match.url_name == 'cart' %} is-active{% endif %}"
+     href="{% url 'cart' %}"{% if request.resolver_match.url_name == 'cart' %} aria-current="page"{% endif %}>
+    <i class="fa fa-shopping-cart" aria-hidden="true"></i>
+    <span>Cart</span>
+  </a>
+  <a class="mobile-bottom-nav__link{% if request.resolver_match.url_name == 'fav' or request.resolver_match.url_name == 'favViewPage' %} is-active{% endif %}"
+     href="{% url 'favViewPage' %}"{% if request.resolver_match.url_name == 'fav' or request.resolver_match.url_name == 'favViewPage' %} aria-current="page"{% endif %}>
+    <i class="fa fa-heart" aria-hidden="true"></i>
+    <span>Favorites</span>
+  </a>
+</nav>
+{% endif %}

@@ -19,7 +19,7 @@
      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
      <link rel="stylesheet" href="{% static 'css/style.css' %}">
   </head>
-  <body>
+  <body class="{% if request.resolver_match.url_name == 'home' or request.resolver_match.url_name == 'login' or request.resolver_match.url_name == 'register' or request.resolver_match.url_name == 'collections' or request.resolver_match.url_name == 'collectionview' or request.resolver_match.url_name == 'cart' or request.resolver_match.url_name == 'favViewPage' or request.resolver_match.url_name == 'search' %}mobile-nav-page{% endif %}{% if request.resolver_match.url_name == 'search' %} search-page-active{% endif %}">
     {% include 'shop/inc/navbar.html' %}
     {% block Content %}
     {% endblock Content %}

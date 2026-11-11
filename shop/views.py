@@ -1,26 +1,62 @@
 import json
 
+from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import redirect,render
+from django.contrib.auth.views import redirect_to_login
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from shop.form import CoustomUserForm
 from .models import *
 from django.contrib import messages
 from django.contrib.auth import authenticate,login,logout
 
+
+def _get_safe_next_url(request):
+    next_url = request.POST.get('next') or request.GET.get('next')
+    if next_url and url_has_allowed_host_and_scheme(
+        next_url,
+        allowed_hosts={request.get_host()},
+        require_https=request.is_secure(),
+    ):
+        return next_url
+    return '/'
+
+
 def home(request):
     products = Product.objects.filter(
         status=False,
         category__status=False,
-    ).order_by('-created_at')
+    ).order_by('?')
     return render(request, 'shop/index.html', {'products': products})
+
+
+def search_products(request):
+    query = request.GET.get('q', '').strip()
+    products = Product.objects.none()
+    if query:
+        products = Product.objects.filter(
+            Q(name__icontains=query)
+            | Q(vendor__icontains=query)
+            | Q(description__icontains=query)
+            | Q(category__name__icontains=query),
+            status=False,
+            category__status=False,
+        ).order_by('name')
+    return render(
+        request,
+        'shop/search.html',
+        {'query': query, 'products': products},
+    )
+
 
 def favViewPage(request):
     if request.user.is_authenticated:
         fav = Favourite.objects.filter(User=request.user)
         return render(request, "shop/fav.html", {"fav": fav})
     else:
-        return redirect("/")
+        return redirect_to_login(request.get_full_path(), reverse('login'))
 
 def add_to_cart(request):
     if request.headers.get('x-requested-with')=='XMLHttpRequest':
@@ -64,7 +100,7 @@ def add_to_cart(request):
 
 def login_page(request):
     if request.user.is_authenticated:
-        return redirect('/')
+        return redirect(_get_safe_next_url(request))
     else:
         if request.method == 'POST':
             name = (request.POST.get('username') or '').strip()
@@ -74,11 +110,11 @@ def login_page(request):
             if user is not None:
                 login(request, user)
                 messages.success(request, "Logged in Successfully")
-                return redirect('/')
+                return redirect(_get_safe_next_url(request))
             else:
                 messages.error(request, "Invalid Username or Password")
                 return redirect('login')
-    return render(request, 'shop/login.html')
+    return render(request, 'shop/login.html', {'next': request.GET.get('next', '')})
 
 def logout_page(request):
     if request.user.is_authenticated:
@@ -127,7 +163,7 @@ def cart_page(request):
         cart=Cart.objects.filter(User=request.user)
         return render(request, 'shop/cart.html', {'cart': cart})
     else:
-       return redirect("/")
+       return redirect_to_login(request.get_full_path(), reverse('login'))
     
 
 def remove_cart(request,cid):

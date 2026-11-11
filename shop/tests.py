@@ -7,6 +7,7 @@ from django.core.files.storage import storages
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from urllib.parse import parse_qs, urlparse
 from PIL import Image
 
 from .models import Category, Product, getFileName
@@ -120,6 +121,34 @@ class LoginTests(TestCase):
         self.assertRedirects(response, reverse('home'))
         self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
 
+    def test_login_returns_user_to_requested_page(self):
+        get_user_model().objects.create_user(
+            username='customer',
+            password='correct-password',
+        )
+
+        response = self.client.post(
+            reverse('login') + '?next=' + reverse('cart'),
+            {
+                'username': 'customer',
+                'password': 'correct-password',
+                'next': reverse('cart'),
+            },
+        )
+
+        self.assertRedirects(response, reverse('cart'))
+
+    def test_cart_and_favorites_redirect_to_login_with_return_path(self):
+        for page_name in ('cart', 'favViewPage'):
+            response = self.client.get(reverse(page_name))
+
+            self.assertEqual(response.status_code, 302)
+            self.assertEqual(urlparse(response.url).path, reverse('login'))
+            self.assertEqual(
+                parse_qs(urlparse(response.url).query).get('next'),
+                [reverse(page_name)],
+            )
+
 
 @override_settings(
     STORAGES={
@@ -139,3 +168,50 @@ class CollectionNavigationTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'href="/collections/Phones/"')
+
+
+class ProductSearchTests(TestCase):
+    def setUp(self):
+        self.category = Category.objects.create(
+            name='Phones',
+            description='Mobile phones',
+        )
+        self.product = Product.objects.create(
+            category=self.category,
+            name='Example Smartphone',
+            vendor='Example Brand',
+            Quantity=5,
+            original_price='100.00',
+            Selling_price='90.00',
+            description='A sample device',
+        )
+
+    def test_search_finds_active_products_by_name(self):
+        response = self.client.get(reverse('search'), {'q': 'smartphone'})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.product.name)
+
+    def test_search_matches_category_and_excludes_hidden_products(self):
+        hidden_product = Product.objects.create(
+            category=self.category,
+            name='Hidden Phone',
+            vendor='Hidden Brand',
+            Quantity=1,
+            original_price='100.00',
+            Selling_price='90.00',
+            description='Hidden from the catalog',
+            status=True,
+        )
+
+        response = self.client.get(reverse('search'), {'q': 'phones'})
+
+        self.assertContains(response, self.product.name)
+        self.assertNotContains(response, hidden_product.name)
+
+    def test_search_shows_prompt_until_a_query_is_submitted(self):
+        response = self.client.get(reverse('search'))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Enter a product name, brand, or category')
+        self.assertNotContains(response, self.product.name)

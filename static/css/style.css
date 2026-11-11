@@ -357,7 +357,7 @@ a
 
     .mobile-search-trigger {
         position: fixed;
-        bottom: calc(6rem + env(safe-area-inset-bottom));
+        bottom: calc(5.7rem + env(safe-area-inset-bottom));
         left: 50%;
         z-index: 1030;
         display: inline-flex;
@@ -381,7 +381,7 @@ a
     }
 
     body.mobile-nav-page .mobile-search-trigger {
-        bottom: calc(6rem + env(safe-area-inset-bottom));
+        bottom: calc(5.7rem + env(safe-area-inset-bottom));
     }
 
     .mobile-bottom-nav {

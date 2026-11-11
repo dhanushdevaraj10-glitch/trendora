@@ -8,6 +8,9 @@
         <div class="col-12">
           <h4 class="mb-3">Cart Items</h4>
           <hr style="border-color: #b8bfc2;">
+          {% if is_guest %}
+          <p class="text-muted">Your cart is saved on this device. <a href="{% url 'login' %}?next={% url 'cart' %}">Sign in</a> to save it to your account.</p>
+          {% endif %}
         </div>
 
         <div class="table-responsive">
@@ -28,6 +31,10 @@
             <td>{{ item.Product_qty }}</td>
             <td class="amt">{{ item.total_cost|floatformat:2 }}</td>
             <td ><a href="{% url 'remove_cart' item.id %}" onclick="return confirm('Are you sure? to remove')" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Remove</button></a></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="text-center py-4">Your cart is empty. <a href="{% url 'collections' %}">Browse collections</a>.</td>
           </tr>
           {% endfor %}
           <tr>

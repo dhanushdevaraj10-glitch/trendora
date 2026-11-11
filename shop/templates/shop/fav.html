@@ -8,6 +8,9 @@
         <div class="col-12">
           <h4 class="mb-3">Favourite Items</h4>
           <hr style="border-color: #b8bfc2;">
+          {% if is_guest %}
+          <p class="text-muted">Your favorites are saved on this device. <a href="{% url 'login' %}?next={% url 'favViewPage' %}">Sign in</a> to save them to your account.</p>
+          {% endif %}
         </div>
 
         <div class="table-responsive">
@@ -24,6 +27,10 @@
             <td>{{ item.Product.name }}</td>
             <td>{{ item.Product.Selling_price | floatformat:2 }}</td>
             <td><a href="{% url 'remove_fav' item.id %}" onclick="return confirm('Are you sure you want to remove this favourite item?')" class="btn btn-danger btn-sm"><i class="fa fa-trash"></i> Remove</a></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="text-center py-4">You have no favorite products yet. <a href="{% url 'collections' %}">Browse collections</a>.</td>
           </tr>
           {% endfor %}
         

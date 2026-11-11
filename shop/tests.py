@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from io import BytesIO
@@ -7,10 +8,9 @@ from django.core.files.storage import storages
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.urls import reverse
-from urllib.parse import parse_qs, urlparse
 from PIL import Image
 
-from .models import Category, Product, getFileName
+from .models import Cart, Category, Favourite, Product, getFileName
 
 
 class CategoryModelTests(TestCase):
@@ -107,6 +107,19 @@ class ShopAdminTests(TestCase):
 
 
 class LoginTests(TestCase):
+    def test_authenticated_navigation_shows_username_and_logout(self):
+        user = get_user_model().objects.create_user(
+            username='customer',
+            password='correct-password',
+        )
+        self.client.force_login(user)
+
+        response = self.client.get(reverse('home'))
+
+        self.assertContains(response, 'customer')
+        self.assertContains(response, 'Logout')
+        self.assertNotContains(response, '>Login</a>')
+
     def test_login_authenticates_user_with_submitted_password(self):
         user = get_user_model().objects.create_user(
             username='customer',
@@ -138,16 +151,11 @@ class LoginTests(TestCase):
 
         self.assertRedirects(response, reverse('cart'))
 
-    def test_cart_and_favorites_redirect_to_login_with_return_path(self):
+    def test_cart_and_favorites_are_available_to_guests(self):
         for page_name in ('cart', 'favViewPage'):
             response = self.client.get(reverse(page_name))
 
-            self.assertEqual(response.status_code, 302)
-            self.assertEqual(urlparse(response.url).path, reverse('login'))
-            self.assertEqual(
-                parse_qs(urlparse(response.url).query).get('next'),
-                [reverse(page_name)],
-            )
+            self.assertEqual(response.status_code, 200)
 
 
 @override_settings(
@@ -215,3 +223,97 @@ class ProductSearchTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Enter a product name, brand, or category')
         self.assertNotContains(response, self.product.name)
+
+
+class GuestShoppingTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username='customer',
+            password='correct-password',
+        )
+        self.category = Category.objects.create(
+            name='Phones',
+            description='Mobile phones',
+        )
+        self.product = Product.objects.create(
+            category=self.category,
+            name='Example Smartphone',
+            vendor='Example Brand',
+            Quantity=8,
+            original_price='100.00',
+            Selling_price='90.00',
+            description='A sample device',
+        )
+
+    def post_product_action(self, url_name, payload):
+        return self.client.post(
+            reverse(url_name),
+            data=json.dumps(payload),
+            content_type='application/json',
+            HTTP_X_REQUESTED_WITH='XMLHttpRequest',
+        )
+
+    def test_guest_can_add_view_and_remove_cart_items(self):
+        response = self.post_product_action(
+            'addtocart',
+            {'pid': self.product.id, 'product_qty': 2},
+        )
+        self.assertEqual(response.json()['status'], 'Product Added to Cart')
+
+        cart_response = self.client.get(reverse('cart'))
+        self.assertEqual(cart_response.status_code, 200)
+        self.assertContains(cart_response, self.product.name)
+        self.assertContains(cart_response, 'saved on this device')
+
+        remove_response = self.client.get(
+            reverse('remove_cart', args=[self.product.id])
+        )
+        self.assertEqual(remove_response.status_code, 302)
+        self.assertNotIn(str(self.product.id), self.client.session.get('guest_cart', {}))
+
+    def test_guest_can_add_view_and_remove_favorites(self):
+        response = self.post_product_action(
+            'fav',
+            {'pid': self.product.id},
+        )
+        self.assertEqual(response.json()['status'], 'Product Added to Favourite')
+
+        favorites_response = self.client.get(reverse('favViewPage'))
+        self.assertEqual(favorites_response.status_code, 200)
+        self.assertContains(favorites_response, self.product.name)
+        self.assertContains(favorites_response, 'saved on this device')
+
+        remove_response = self.client.get(
+            reverse('remove_fav', args=[self.product.id])
+        )
+        self.assertEqual(remove_response.status_code, 302)
+        self.assertNotIn(self.product.id, self.client.session.get('guest_favorites', []))
+
+    def test_guest_items_merge_into_account_on_login(self):
+        self.post_product_action(
+            'addtocart',
+            {'pid': self.product.id, 'product_qty': 3},
+        )
+        self.post_product_action('fav', {'pid': self.product.id})
+        Cart.objects.create(
+            User=self.user,
+            Products=self.product,
+            Product_qty=4,
+        )
+
+        response = self.client.post(
+            reverse('login'),
+            {'username': 'customer', 'password': 'correct-password'},
+        )
+
+        self.assertRedirects(response, reverse('home'))
+        self.assertEqual(
+            Cart.objects.get(User=self.user, Products=self.product).Product_qty,
+            7,
+        )
+        self.assertEqual(
+            Favourite.objects.filter(User=self.user, Product=self.product).count(),
+            1,
+        )
+        self.assertNotIn('guest_cart', self.client.session)
+        self.assertNotIn('guest_favorites', self.client.session)

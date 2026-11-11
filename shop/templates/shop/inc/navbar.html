@@ -18,7 +18,7 @@
   </div>
 </nav>
 
-{% if request.resolver_match.url_name != 'search' %}
+{% if request.resolver_match.url_name != 'search' and request.resolver_match.url_name != 'product_details' %}
 <a class="mobile-search-trigger" href="{% url 'search' %}" aria-label="Search products">
   <i class="fa fa-search" aria-hidden="true"></i>
 </a>
